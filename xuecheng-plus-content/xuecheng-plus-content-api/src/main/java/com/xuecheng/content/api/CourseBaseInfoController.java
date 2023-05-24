@@ -9,6 +9,7 @@ import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
 import com.xuecheng.content.service.CourseBaseInfoService;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -63,5 +64,12 @@ public class CourseBaseInfoController {
         Long companyId = 1232141425L;
         CourseBaseInfoDto courseBaseInfoDto=courseBaseInfoService.updateCourseBase(companyId,dto);
         return  courseBaseInfoDto;
+    }
+
+    @ApiOperation(value = "删除课程")
+    @ApiImplicitParam(value = "courseBaseId",name = "课程id",required = true,paramType = "path",dataType = "long")
+    @DeleteMapping("/course/{courseBaseId}")
+    public void removeCourse(@PathVariable("courseBaseId") long courseId){
+        courseBaseInfoService.removeCourse(courseId);
     }
 }
