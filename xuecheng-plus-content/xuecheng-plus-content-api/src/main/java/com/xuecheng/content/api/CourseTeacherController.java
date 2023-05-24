@@ -25,8 +25,9 @@ public class CourseTeacherController {
     }
 
     @ApiOperation(value = "保存课程教师")
+    @ApiImplicitParam(value = "dto",name = "课程教师",required = true,paramType = "body",dataType = "CourseTeacherDto")
     @PostMapping("/courseTeacher")
-    public CourseTeacherDto addCourseTeacher(@RequestBody CourseTeacherDto dto){
-        return courseTeacherService.addCourseTeacher(dto);
+    public CourseTeacherDto savaCourseTeacher(@RequestBody CourseTeacherDto dto){
+        return courseTeacherService.saveCourseTeacher(dto);
     }
 }

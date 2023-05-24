@@ -51,20 +51,33 @@ public class CourseTeacherServiceImpl extends ServiceImpl<CourseTeacherMapper, C
     }
 
     /**
-     * 添加教师
+     * 保存教师
      * @param dto 教师对象
-     * @return 完成添加的教师对象
+     * @return 完成保存的教师对象
      */
     @Transactional
     @Override
-    public CourseTeacherDto addCourseTeacher(CourseTeacherDto dto) {
+    public CourseTeacherDto saveCourseTeacher(CourseTeacherDto dto) {
         CourseTeacher courseTeacher=new CourseTeacher();
-        BeanUtils.copyProperties(dto,courseTeacher);
-        //插入教师对象
-        courseTeacherMapper.insert(courseTeacher);
-        //查询刚刚插入的教师对象
-        courseTeacher=courseTeacherMapper.selectById(courseTeacher.getId());
-        BeanUtils.copyProperties(courseTeacher,dto);
+        Long id= dto.getId();
+        //根据id值是否为空判断进行插入还是更新操作
+        if (id == null) {
+            BeanUtils.copyProperties(dto,courseTeacher);
+            //插入教师对象
+            courseTeacherMapper.insert(courseTeacher);
+            //查询刚刚插入的教师对象
+            courseTeacher=courseTeacherMapper.selectById(courseTeacher.getId());
+            BeanUtils.copyProperties(courseTeacher,dto);
+        }else {
+            //拷贝新的教师信息
+            BeanUtils.copyProperties(dto,courseTeacher);
+            //更新教师信息
+            courseTeacherMapper.updateById(courseTeacher);
+            //查询更新后的教师信息
+            CourseTeacher courseTeacherNew=courseTeacherMapper.selectById(dto.getId());
+            BeanUtils.copyProperties(courseTeacherNew,dto);
+        }
         return dto;
     }
+
 }

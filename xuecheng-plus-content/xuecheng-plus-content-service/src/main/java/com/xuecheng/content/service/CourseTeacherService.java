@@ -27,9 +27,10 @@ public interface CourseTeacherService extends IService<CourseTeacher> {
     List<CourseTeacherDto> getCourseTeacherByCourseBaseId(long courseBaseId);
 
     /**
-     * 添加教师
+     * 保存教师
      * @param dto 教师对象
-     * @return 完成添加的教师对象
+     * @return 完成保存的教师对象
      */
-    CourseTeacherDto addCourseTeacher(CourseTeacherDto dto);
+    CourseTeacherDto saveCourseTeacher(CourseTeacherDto dto);
+
 }
