@@ -80,4 +80,17 @@ public class CourseTeacherServiceImpl extends ServiceImpl<CourseTeacherMapper, C
         return dto;
     }
 
+    /**
+     * 删除课程教师
+     * @param courseId 课程id
+     * @param courseTeacherId 课程教师id
+     */
+    @Transactional
+    @Override
+    public void removeCourseTeacher(long courseId, long courseTeacherId) {
+        LambdaQueryWrapper<CourseTeacher> queryWrapper=new LambdaQueryWrapper();
+        queryWrapper.eq(CourseTeacher::getCourseId,courseId);
+        queryWrapper.eq(CourseTeacher::getId,courseTeacherId);
+        courseTeacherMapper.delete(queryWrapper);
+    }
 }

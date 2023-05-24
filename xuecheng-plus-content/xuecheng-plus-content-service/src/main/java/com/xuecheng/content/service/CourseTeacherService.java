@@ -33,4 +33,10 @@ public interface CourseTeacherService extends IService<CourseTeacher> {
      */
     CourseTeacherDto saveCourseTeacher(CourseTeacherDto dto);
 
+    /**
+     * 删除课程教师
+     * @param courseId 课程id
+     * @param courseTeacherId 课程教师id
+     */
+    void removeCourseTeacher(long courseId,long courseTeacherId);
 }
