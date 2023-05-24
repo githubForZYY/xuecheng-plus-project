@@ -6,9 +6,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,5 +22,11 @@ public class CourseTeacherController {
     @GetMapping("/courseTeacher/list/{courseBaseId}")
     public List<CourseTeacherDto> getCourseTeacherList(@PathVariable long courseBaseId){
         return courseTeacherService.getCourseTeacherByCourseBaseId(courseBaseId);
+    }
+
+    @ApiOperation(value = "保存课程教师")
+    @PostMapping("/courseTeacher")
+    public CourseTeacherDto addCourseTeacher(@RequestBody CourseTeacherDto dto){
+        return courseTeacherService.addCourseTeacher(dto);
     }
 }

@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,5 +48,23 @@ public class CourseTeacherServiceImpl extends ServiceImpl<CourseTeacherMapper, C
             courseTeacherDtos.add(courseTeacherDto);
         }
         return courseTeacherDtos;
+    }
+
+    /**
+     * 添加教师
+     * @param dto 教师对象
+     * @return 完成添加的教师对象
+     */
+    @Transactional
+    @Override
+    public CourseTeacherDto addCourseTeacher(CourseTeacherDto dto) {
+        CourseTeacher courseTeacher=new CourseTeacher();
+        BeanUtils.copyProperties(dto,courseTeacher);
+        //插入教师对象
+        courseTeacherMapper.insert(courseTeacher);
+        //查询刚刚插入的教师对象
+        courseTeacher=courseTeacherMapper.selectById(courseTeacher.getId());
+        BeanUtils.copyProperties(courseTeacher,dto);
+        return dto;
     }
 }
