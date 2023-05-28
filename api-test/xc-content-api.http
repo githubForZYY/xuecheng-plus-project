@@ -47,3 +47,14 @@ Content-Type: application/json
   "auditStatus": "202002",
   "courseName": ""
 }
+
+### 上传文件
+POST {{media_host}}/media/upload/coursefile
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="filedata"; filename="test.jpg"
+Content-Type: application/octet-stream
+
+< C:\Users\ye'zi\Desktop\测试minio\test - 副本.png
+
