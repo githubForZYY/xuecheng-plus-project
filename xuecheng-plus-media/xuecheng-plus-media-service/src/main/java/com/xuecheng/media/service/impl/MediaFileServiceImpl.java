@@ -7,6 +7,7 @@ import com.j256.simplemagic.ContentInfoUtil;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
+import com.xuecheng.base.model.RestResponse;
 import com.xuecheng.media.mapper.MediaFilesMapper;
 import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 
@@ -14,12 +15,14 @@ import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
 import com.xuecheng.media.service.MediaFileService;
-import io.minio.MinioClient;
-import io.minio.UploadObjectArgs;
+import io.minio.*;
 
 import io.minio.errors.*;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,15 +31,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Mr.M
@@ -60,6 +63,10 @@ public class MediaFileServiceImpl implements MediaFileService {
     //普通文件桶
     @Value("${minio.bucket.files}")
     private String bucket_files;
+
+    //视频文件桶
+    @Value("${minio.bucket.videofiles}")
+    private String video_files;
     @Override
     public PageResult<MediaFiles> queryMediaFiels(Long companyId, PageParams pageParams, QueryMediaParamsDto queryMediaParamsDto) {
 
@@ -201,5 +208,196 @@ public class MediaFileServiceImpl implements MediaFileService {
         UploadFileResultDto uploadFileResultDto=new UploadFileResultDto();
         BeanUtils.copyProperties(mediaFiles,uploadFileResultDto);
         return uploadFileResultDto;
+    }
+
+    //查询文件是否已存储
+    @Override
+    public RestResponse<Boolean> checkFile(String md5) {
+        //查询数据库表是否存在该md5值的文件信息
+        MediaFiles mediaFiles=mediaFilesMapper.selectById(md5);
+        if (mediaFiles != null) {
+            //获取文件存放路径信息
+            String bucket=mediaFiles.getBucket();
+            String object=mediaFiles.getFilePath();
+            GetObjectArgs objectArgs = GetObjectArgs.builder().bucket(bucket).object(object).build();
+            try {
+                InputStream stream=minioClient.getObject(objectArgs);
+                if (stream != null) {
+                    //文件已存在
+                    RestResponse.success(true);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } 
+        }
+        //文件不存在
+        return RestResponse.success(false);
+    }
+
+    //查询块是否已传输
+    @Override
+    public RestResponse<Boolean> checkChunk(String md5,int chunkIndex) {
+        String chunkPath=getChunkPath(md5)+chunkIndex;
+        GetObjectArgs objectArgs = GetObjectArgs.builder().bucket(video_files).object(chunkPath).build();
+        try {
+            InputStream stream=minioClient.getObject(objectArgs);
+            //块已传输
+            if (stream != null) {
+                return RestResponse.success(true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return RestResponse.success(false);
+    }
+    
+    //根据块md5值和块索引获取块在minio的存放路径
+    private String getChunkPath(String md5) {
+        return md5.substring(0,1)+"/"+md5.substring(1,2)+"/"+md5+"/"+"chunk"+"/";
+    }
+
+    //上传块
+    @Override
+    public RestResponse<Boolean> uploadChunk(String md5,int chunkIndex,String localFilePath){
+        //获取块在minio的存放路径
+        String chunkPath=getChunkPath(md5)+chunkIndex;
+        try {
+            UploadObjectArgs objectArgs= UploadObjectArgs
+                    .builder()
+                    .bucket(video_files)
+                    .object(chunkPath)
+                    .filename(localFilePath)
+                    .build();
+             minioClient.uploadObject(objectArgs);
+             //打印日志
+            log.debug("上传块:{}到桶:{}成功",chunkPath, video_files);
+             //上传成功
+             return RestResponse.success(true);
+        } catch (Exception e) {
+            //上传失败
+            log.error("上传块:{}到桶:{}失败",chunkPath, video_files);
+            e.printStackTrace();
+        }
+        return RestResponse.validfail(false,"上传块失败");
+    }
+
+    //合并文件
+    @Override
+    public RestResponse<Boolean> mergeChunk(long companyId,String fileMd5,UploadFileParamsDto dto,int chunkTotal) {
+        //获取分块文件夹路径
+        String chunkFloderPath=getChunkPath(fileMd5);
+        //组成将分块文件路径组成 List<ComposeSource>
+        List<ComposeSource> sourceObjectList = Stream.iterate(0, i -> ++i)
+                .limit(chunkTotal)
+                .map(i -> ComposeSource.builder()
+                        .bucket(video_files)
+                        .object(chunkFloderPath.concat(Integer.toString(i)))
+                        .build())
+                .collect(Collectors.toList());
+        //获取文件名
+        String fileName = dto.getFilename();
+        //获取文件扩展名
+        String extName=fileName.substring(fileName.lastIndexOf("."));
+        String mergeFilePath=getMergeFilePathByMd5(fileMd5,extName);
+        //合并块
+        try {
+            ObjectWriteResponse objectWriteResponse = minioClient.composeObject(
+                    ComposeObjectArgs
+                            .builder()
+                            .bucket(video_files)
+                            .object(mergeFilePath)
+                            .sources(sourceObjectList)
+                            .build()
+            );
+            log.debug("合并块列表:{}到桶:{}成功",sourceObjectList,video_files);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("合并块列表:{}到桶:{}失败",sourceObjectList,video_files);
+        }
+        //下载合并后文件
+        File minioFile=downloadFileByMinio(video_files,mergeFilePath);
+        if (minioFile == null) {
+            log.error("下载文件:{}从桶:{}失败",fileName,video_files);
+            return RestResponse.validfail(false,"下载合并后文件失败");
+        }//下载成功，验证md5值
+        try {
+            FileInputStream fileInputStream=new FileInputStream(minioFile);
+            String mergeFileMd5="";
+            try {
+                mergeFileMd5=DigestUtils.md5Hex(fileInputStream);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (!fileMd5.equals(mergeFileMd5)) {
+                return RestResponse.validfail(false,"上传文件失败");
+            }
+            dto.setFileSize(minioFile.length());
+        } catch (FileNotFoundException e) {
+            log.error("校验合并后文件:{}md5值{}出错",fileName,fileMd5);
+            e.printStackTrace();
+            return RestResponse.validfail(false,"上传文件失败");
+        }finally {
+            if (minioFile != null) {
+                minioFile.delete();
+            }
+        }
+        //将合并后的文件信息入库
+        currentProxy.addFlieInfoToDB(companyId,fileMd5,dto,video_files,mergeFilePath);
+        //清理块文件
+        clearChunkFiles(chunkFloderPath,chunkTotal);
+        return RestResponse.success(true,"文件上传成功");
+    }
+    //获取合并后的文件路径
+    private String getMergeFilePathByMd5(String fileMd5,String extName){
+        return fileMd5.substring(0,1)+"/"+fileMd5.substring(1,2)+"/"+fileMd5+extName;
+    }
+
+    //从minio下载文件
+    private File downloadFileByMinio(String bucket,String filePath){
+        GetObjectArgs build = GetObjectArgs.builder().bucket(bucket).object(filePath).build();
+        OutputStream outputStream=null;
+        try {
+            InputStream stream = minioClient.getObject(build);
+            File fileTemp=File.createTempFile("minio",".temp");
+            outputStream=new FileOutputStream(fileTemp);
+            IOUtils.copy(stream,outputStream);
+            return fileTemp;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return null;
+    }
+    //清除块文件
+    private void clearChunkFiles(String chunkFileFolderPath,int chunkTotal) {
+
+        try {
+            List<DeleteObject> deleteObjects = Stream.iterate(0, i -> ++i)
+                    .limit(chunkTotal)
+                    .map(i -> new DeleteObject(chunkFileFolderPath.concat(Integer.toString(i))))
+                    .collect(Collectors.toList());
+
+            RemoveObjectsArgs removeObjectsArgs = RemoveObjectsArgs.builder().bucket("video").objects(deleteObjects).build();
+            Iterable<Result<DeleteError>> results = minioClient.removeObjects(removeObjectsArgs);
+            results.forEach(r -> {
+                DeleteError deleteError = null;
+                try {
+                    deleteError = r.get();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    log.error("清楚分块文件失败,objectname:{}", deleteError.objectName(), e);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("清楚分块文件失败,chunkFileFolderPath:{}", chunkFileFolderPath, e);
+        }
     }
 }

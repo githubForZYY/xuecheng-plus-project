@@ -8,10 +8,15 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.internal.util.io.IOUtil;
 import org.springframework.http.MediaType;
+import org.springframework.util.DigestUtils;
 
 import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class MinioTest {
     static MinioClient minioClient=
@@ -75,4 +80,95 @@ public class MinioTest {
             System.out.println("查询失败");
         }
     }
+
+    @Test
+    //测试分件分块上传
+    public void chunkUploadTest(){
+        File sourceFile=new File("C:\\Users\\ye'zi\\Desktop\\测试minio\\测试分块上传.mp4");
+        try {
+            RandomAccessFile r_file=new RandomAccessFile(sourceFile,"r");
+            //分块大小
+            long chunkSize=1024*1024*1;
+            //缓冲区
+            byte b[]=new byte[1024];
+            //分块数
+            int chunkNum=(int)Math.ceil(sourceFile.length()*1.0/chunkSize);
+            File folder=new File("C:\\Users\\ye'zi\\Desktop\\测试minio\\测试分块");
+            if (!folder.exists()) {
+                folder.mkdir();
+            }
+            for (int i = 0; i < chunkNum; i++) {
+                File file=new File("C:\\Users\\ye'zi\\Desktop\\测试minio\\测试分块\\"+i);
+                if (file.exists()) {
+                    file.delete();
+                }
+                boolean fileNew=file.createNewFile();
+                if (fileNew) {
+                    RandomAccessFile w_file = new RandomAccessFile(file, "rw");
+                    int len=-1;
+                    while((len=r_file.read(b))!=-1){
+                        w_file.write(b,0,len);
+                        if (file.length() >= chunkSize) {
+                            break;
+                        }
+                    }
+                    w_file.close();
+                }
+                System.out.println("完成分块"+i+"的上传");
+            }
+            r_file.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    //合并分块文件
+    @Test
+    public void testMergeChunk() throws Exception {
+        //分块文件所在文件夹
+        File folder=new File("C:\\Users\\ye'zi\\Desktop\\测试minio\\测试分块");
+        //创建合并文件
+        File mergerFile=new File("C:\\Users\\ye'zi\\Desktop\\测试minio\\合并文件.mp4");
+        if (mergerFile.exists()) {
+            mergerFile.delete();
+        }
+        mergerFile.createNewFile();
+        RandomAccessFile w_file=new RandomAccessFile(mergerFile,"rw");
+        //指针指向文件开始处
+        w_file.seek(0);
+        //缓冲区
+        byte b[]=new byte[1024];
+        //源文件
+        File sourceFile=new File("C:\\Users\\ye'zi\\Desktop\\测试minio\\测试分块上传.mp4");
+        //分块文件列表
+        File[] files=folder.listFiles();
+        List<File> filelist = Arrays.asList(files);
+        //对分块列表进行排序，保证数据顺序正确
+        Collections.sort(filelist, new Comparator<File>() {
+            @Override
+            public int compare(File o1, File o2) {
+                return Integer.parseInt(o1.getName())-Integer.parseInt(o2.getName());
+            }
+        });
+        //合并文件
+        for (File file: filelist) {
+            RandomAccessFile r_file=new RandomAccessFile(file,"r");
+            int len=-1;
+            while((len=r_file.read(b))!=-1){
+                w_file.write(b,0,len);
+            }
+            r_file.close();
+        }
+        w_file.close();
+        //根据md5值校验文件
+        FileInputStream sourceFileInputStream=new FileInputStream(sourceFile);
+        FileInputStream mergeFileInputStream=new FileInputStream(mergerFile);
+        String sourceMd5 = DigestUtils.md5DigestAsHex(sourceFileInputStream);
+        String mergeMd5 = DigestUtils.md5DigestAsHex(mergeFileInputStream);
+        if (sourceMd5.equals(mergeMd5)) {
+            System.out.println("合并成功");
+        }else {
+            System.out.println("合并失败");
+        }
+    }
+
 }

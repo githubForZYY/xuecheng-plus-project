@@ -2,6 +2,7 @@ package com.xuecheng.media.service;
 
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
+import com.xuecheng.base.model.RestResponse;
 import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
@@ -51,4 +52,40 @@ PageResult<MediaFiles> queryMediaFiels(Long companyId,PageParams pageParams, Que
                                    UploadFileParamsDto uploadFileParamsDto,
                                    String bucket,
                                    String objectName);
+
+ /**
+  * 查询该文件是否已存在
+  * @param md5 文件的md5值
+  * @return RestResponse<Boolean> 响应类型，Boolean值为true表示文件已存在，反之不存在
+  */
+ RestResponse<Boolean> checkFile(String md5);
+
+ /**
+  *
+  * @param md5 块的md5值
+  * @param chunkIndex 块的索引
+  * @return RestResponse<Boolean> 响应类型，Boolean值为true表示此块已存在，反之不存在
+  */
+ RestResponse<Boolean> checkChunk(String md5,int chunkIndex);
+
+ /**
+  *
+  * @param md5 块md5值
+  * @param chunkIndex 块索引
+  * @param localFilePath 本地文件路径
+  * @return
+  */
+ RestResponse<Boolean> uploadChunk(String md5,int chunkIndex,String localFilePath);
+
+ /**
+  * 合并文件
+  * @param companyId 机构id
+  * @param fileMd5 文件md5值
+  * @param dto 上传文件参数对象
+  * @param chunkTotal 块总数
+  * @return
+  */
+ RestResponse<Boolean> mergeChunk(long companyId,String fileMd5,UploadFileParamsDto dto,int chunkTotal);
 }
+
+
