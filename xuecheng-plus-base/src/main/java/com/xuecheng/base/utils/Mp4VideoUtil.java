@@ -5,13 +5,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class Mp4VideoUtil extends VideoUtil {
 
     String ffmpeg_path = "E:\\soft\\FFmpeg\\ffmpeg-master-latest-win64-gpl-shared\\bin\\ffmpeg.exe";//ffmpeg的安装位置
-    String video_path = "D:\\BaiduNetdiskDownload\\test1.avi";
-    String mp4_name = "test1.mp4";
-    String mp4folder_path = "D:/BaiduNetdiskDownload/Movies/test1/";
+    String video_path = "C:\\Users\\ye'zi\\Desktop\\测试minio\\测试转码.avi";
+    String mp4_name = "测试工具类转码.mp4";
+    String mp4folder_path = "C:\\Users\\ye'zi\\Desktop\\测试minio\\";
     public Mp4VideoUtil(String ffmpeg_path, String video_path, String mp4_name, String mp4folder_path){
         super(ffmpeg_path);
         this.ffmpeg_path = ffmpeg_path;
@@ -90,7 +89,7 @@ public class Mp4VideoUtil extends VideoUtil {
         //转换后mp4文件的名称
         String mp4_name = "测试工具类转码.mp4";
         //转换后mp4文件的路径
-        String mp4_path = "C:\\Users\\ye'zi\\Desktop\\测试minio\\";
+        String mp4_path = "C:\\Users\\ye'zi\\Desktop\\测试minio\\测试工具类转码.mp4";
         //创建工具类对象
         Mp4VideoUtil videoUtil = new Mp4VideoUtil(ffmpeg_path,video_path,mp4_name,mp4_path);
         //开始视频转换，成功将返回success
