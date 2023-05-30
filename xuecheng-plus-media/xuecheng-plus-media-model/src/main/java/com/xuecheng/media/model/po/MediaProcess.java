@@ -42,7 +42,7 @@ public class MediaProcess implements Serializable {
     private String filePath;
 
     /**
-     * 状态,1:未处理，视频处理完成更新为2
+     * 状态,1:未处理，2:视频处理完成更新为 3:处理出错
      */
     private String status;
 

@@ -9,6 +9,7 @@ import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -86,6 +87,24 @@ PageResult<MediaFiles> queryMediaFiels(Long companyId,PageParams pageParams, Que
   * @return
   */
  RestResponse<Boolean> mergeChunk(long companyId,String fileMd5,UploadFileParamsDto dto,int chunkTotal);
+
+ /**
+  * 从minio下载文件
+  * @param bucket 桶
+  * @param filePath 文件路径
+  * @return
+  */
+ File downloadFileByMinio(String bucket, String filePath);
+
+ /**
+  * 上传文件到minio
+  * @param bucket
+  * @param objectName
+  * @param localFilePath
+  * @param mimeType
+  * @return
+  */
+ boolean addFlieToMinio(String bucket,String objectName,String localFilePath,String mimeType);
 }
 
 

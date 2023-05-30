@@ -9,11 +9,13 @@ import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
 import com.xuecheng.base.model.RestResponse;
 import com.xuecheng.media.mapper.MediaFilesMapper;
+import com.xuecheng.media.mapper.MediaProcessMapper;
 import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
+import com.xuecheng.media.model.po.MediaProcess;
 import com.xuecheng.media.service.MediaFileService;
 import io.minio.*;
 
@@ -60,6 +62,8 @@ public class MediaFileServiceImpl implements MediaFileService {
     @Autowired
     MediaFileService currentProxy;
 
+    @Autowired
+    MediaProcessMapper mediaProcessMapper;
     //普通文件桶
     @Value("${minio.bucket.files}")
     private String bucket_files;
@@ -118,6 +122,7 @@ public class MediaFileServiceImpl implements MediaFileService {
         return mimeType;
     }
     //将文件上传到minio
+    @Override
     public boolean addFlieToMinio(String bucket,String objectName,String localFilePath,String mimeType){
         try {
             UploadObjectArgs uploadObjectArgs = UploadObjectArgs
@@ -168,12 +173,32 @@ public class MediaFileServiceImpl implements MediaFileService {
             mediaFiles.setStatus("1");
             int i=mediaFilesMapper.insert(mediaFiles);
             if (i<0){
-                log.error("保存文件到数据库表失败:{}",mediaFiles.toString());
+                log.error("保存文件信息到数据库表失败:{}",mediaFiles.toString());
                 XueChengPlusException.cast("保存文件信息失败");
             }
-            log.debug("保存文件到数据库表成功:{}",mediaFiles.toString());
+            //保存待处理文件信息到待处理文件表
+            addWaittingMask(mediaFiles);
+            log.debug("保存文件信息到数据库表成功:{}",mediaFiles.toString());
         }
         return mediaFiles;
+    }
+
+    //添加文件到待处理任务表
+    private void addWaittingMask(MediaFiles mediaFiles) {
+        //文件名
+        String filename = mediaFiles.getFilename();
+        //文件后缀名
+        String extName = filename.substring(filename.lastIndexOf("."));
+        //根据mimeType判断是否加入待处理任务表，(只处理avi类型的文件)
+        String mimeType=getMimeType(extName);
+        if (mimeType.equals("video/x-msvideo")) {
+            MediaProcess mediaProcess = new MediaProcess();
+            BeanUtils.copyProperties(mediaFiles,mediaProcess);
+            mediaProcess.setStatus("1");
+            mediaProcess.setFailCount(0);
+            //保存待处理任务
+            mediaProcessMapper.insert(mediaProcess);
+        }
     }
 
     //上传文件
@@ -353,7 +378,8 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     //从minio下载文件
-    private File downloadFileByMinio(String bucket,String filePath){
+    @Override
+    public File downloadFileByMinio(String bucket,String filePath){
         GetObjectArgs build = GetObjectArgs.builder().bucket(bucket).object(filePath).build();
         OutputStream outputStream=null;
         try {

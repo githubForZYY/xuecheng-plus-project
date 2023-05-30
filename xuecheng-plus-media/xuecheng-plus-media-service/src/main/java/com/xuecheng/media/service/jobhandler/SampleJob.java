@@ -32,4 +32,5 @@ public class SampleJob {
         log.info("开始执行第"+shardIndex+"批任务");
 
     }
+
 }
