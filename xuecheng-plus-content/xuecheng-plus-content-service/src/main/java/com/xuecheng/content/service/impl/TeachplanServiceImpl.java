@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.content.mapper.TeachplanMapper;
 import com.xuecheng.content.mapper.TeachplanMediaMapper;
+import com.xuecheng.content.model.dto.BindTeachplanMediaDto;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
 import com.xuecheng.content.model.po.Teachplan;
@@ -128,5 +129,44 @@ public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan
         teachplan.setOrderby(orderBy);
         teachplanMapper.updateById(teachplan);
         teachplanMapper.updateById(teachplanTemp);
+    }
+
+    //给课程计划绑定媒资文件
+    @Override
+    public void bingTeachplanMedia(BindTeachplanMediaDto bindTeachplanMediaDto) {
+        //课程计划id
+        Long teachplanId = bindTeachplanMediaDto.getTeachplanId();
+        //查询课程计划
+        Teachplan teachplan = teachplanMapper.selectById(teachplanId);
+        if (teachplan == null) {
+            XueChengPlusException.cast("课程计划不存在");
+            log.error("课程计划不存在，id：{}",teachplanId);
+            return;
+        }
+        Integer grade=teachplan.getGrade();
+        if (grade!=2){
+            XueChengPlusException.cast("只允许向二级课程计划添加媒资文件");
+            log.error("只允许向二级课程计划添加媒资文件，id：{}",teachplanId);
+            return;
+        }
+        TeachplanMedia teachplanMedia=new TeachplanMedia();
+        teachplanMedia.setMediaId(bindTeachplanMediaDto.getMediaId());
+        teachplanMedia.setTeachplanId(teachplanId);
+        teachplanMedia.setCourseId(teachplan.getCourseId());
+        teachplanMedia.setMediaFilename(bindTeachplanMediaDto.getFileName());
+        LambdaQueryWrapper<TeachplanMedia> lambdaQueryWrapper=new LambdaQueryWrapper();
+        lambdaQueryWrapper.eq(TeachplanMedia::getTeachplanId,teachplanId);
+        //删除原有课程计划绑定的媒资文件
+        teachplanMediaMapper.delete(lambdaQueryWrapper);
+        //插入新绑定的媒资文件信息
+        teachplanMediaMapper.insert(teachplanMedia);
+    }
+
+    @Override
+    public void removeTeachplanMediaBinding(Long teachPlanId, String mediaId) {
+        LambdaQueryWrapper<TeachplanMedia> lambdaQueryWrapper=new LambdaQueryWrapper();
+        lambdaQueryWrapper.eq(TeachplanMedia::getTeachplanId,teachPlanId);
+        lambdaQueryWrapper.eq(TeachplanMedia::getMediaId,mediaId);
+        teachplanMediaMapper.delete(lambdaQueryWrapper);
     }
 }

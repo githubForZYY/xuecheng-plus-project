@@ -1,5 +1,6 @@
 package com.xuecheng.content.api;
 
+import com.xuecheng.content.model.dto.BindTeachplanMediaDto;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
 import com.xuecheng.content.service.TeachplanService;
@@ -12,31 +13,30 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Api(value = "课程计划编辑接口",tags = "课程计划编辑接口")
+@Api(value = "课程计划编辑接口", tags = "课程计划编辑接口")
 @RestController
 public class TeachplanController {
     @Autowired
     TeachplanService teachplanService;
 
-
     @ApiOperation(value = "查询课程计划树")
-    @ApiImplicitParam(value = "courseId",name = "课程id",required = true,paramType ="path",dataType ="long")
+    @ApiImplicitParam(value = "courseId", name = "课程id", required = true, paramType = "path", dataType = "long")
     @GetMapping("/teachplan/{courseId}/tree-nodes")
-    public List<TeachplanDto> getTeachplanTree(@PathVariable long courseId){
+    public List<TeachplanDto> getTeachplanTree(@PathVariable long courseId) {
         return teachplanService.findTeachplanTree(courseId);
     }
 
     @ApiOperation(value = "新增或修改课程计划")
-    @ApiImplicitParam(value = "dto",name = "课程计划",required = true,paramType ="body",dataType ="SaveTeachplanDto")
+    @ApiImplicitParam(value = "dto", name = "课程计划", required = true, paramType = "body", dataType = "SaveTeachplanDto")
     @PostMapping("/teachplan")
-    public void saveTeachplan(@RequestBody SaveTeachplanDto dto){
+    public void saveTeachplan(@RequestBody SaveTeachplanDto dto) {
         teachplanService.saveTeachplan(dto);
     }
 
     @ApiOperation(value = "删除课程计划")
-    @ApiImplicitParam(value = "id",name = "课程计划id",required = true,paramType = "path",dataType = "long")
+    @ApiImplicitParam(value = "id", name = "课程计划id", required = true, paramType = "path", dataType = "long")
     @DeleteMapping("/teachplan/{id}")
-    public void deleteTeachplan(@PathVariable long id){
+    public void deleteTeachplan(@PathVariable long id) {
         teachplanService.deleteTeachplan(id);
     }
 
@@ -48,7 +48,18 @@ public class TeachplanController {
             }
     )
     @PostMapping("/teachplan/{type}/{teachPlanId}")
-    public void moveTeachplan(@PathVariable String type,@PathVariable long teachPlanId){
-        teachplanService.moveTeachplan(type,teachPlanId);
+    public void moveTeachplan(@PathVariable String type, @PathVariable long teachPlanId) {
+        teachplanService.moveTeachplan(type, teachPlanId);
+    }
+
+    @ApiOperation("给课程计划绑定媒资文件")
+    @PostMapping("/teachplan/association/media")
+    public void bindTeachplanMedia(@RequestBody BindTeachplanMediaDto bindTeachplanMediaDto) {
+        teachplanService.bingTeachplanMedia(bindTeachplanMediaDto);
+    }
+
+    @DeleteMapping("/teachplan/association/media/{teachPlanId}/{mediaId}")
+    public void removeTeachplanMediaBinding(@PathVariable("teachPlanId") Long teachPlanId, @PathVariable("mediaId") String mediaId) {
+        teachplanService.removeTeachplanMediaBinding(teachPlanId,mediaId);
     }
 }

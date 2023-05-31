@@ -66,9 +66,9 @@
             two.orderby        two_orderby,
             two.course_id      two_courseId,
             two.course_pub_id  two_coursePubId,
-            tm.media_fileName tm_media_fileName,
-            tm.id tm_id,
-            tm.media_id tm_media_id
+            tm.media_fileName mediaFilename,
+            tm.id teachplanMeidaId,
+            tm.media_id mediaId
         FROM
             `teachplan` one
                 LEFT JOIN teachplan two on one.id=two.parentid
