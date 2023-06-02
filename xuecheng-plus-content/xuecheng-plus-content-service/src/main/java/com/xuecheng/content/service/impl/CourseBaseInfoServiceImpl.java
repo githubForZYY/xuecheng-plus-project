@@ -158,13 +158,19 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         //组装在一起
         CourseBaseInfoDto courseBaseInfoDto = new CourseBaseInfoDto();
         BeanUtils.copyProperties(courseBase,courseBaseInfoDto);
+
         if(courseMarket!=null){
             BeanUtils.copyProperties(courseMarket,courseBaseInfoDto);
         }
 
         //通过courseCategoryMapper查询分类信息，将分类名称放在courseBaseInfoDto对象
         //todo：课程分类的名称设置到courseBaseInfoDto
-
+        //获取大类分类名
+        CourseCategory courseCategoryMt = courseCategoryMapper.selectById(courseBase.getMt());
+        courseBaseInfoDto.setMtName(courseCategoryMt.getName());
+        //获取小类分类名
+        CourseCategory courseCategorySt = courseCategoryMapper.selectById(courseBase.getSt());
+        courseBaseInfoDto.setStName(courseCategorySt.getName());
         return courseBaseInfoDto;
 
     }
