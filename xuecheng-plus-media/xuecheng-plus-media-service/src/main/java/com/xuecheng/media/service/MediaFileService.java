@@ -105,6 +105,8 @@ PageResult<MediaFiles> queryMediaFiels(Long companyId,PageParams pageParams, Que
   * @return
   */
  boolean addFlieToMinio(String bucket,String objectName,String localFilePath,String mimeType);
+
+ MediaFiles getFileById(String mediaId);
 }
 
 

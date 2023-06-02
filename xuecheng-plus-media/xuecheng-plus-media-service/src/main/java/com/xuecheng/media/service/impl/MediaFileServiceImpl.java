@@ -428,4 +428,9 @@ public class MediaFileServiceImpl implements MediaFileService {
             log.error("清楚分块文件失败,chunkFileFolderPath:{}", chunkFileFolderPath, e);
         }
     }
+
+    @Override
+    public MediaFiles getFileById(String mediaId) {
+        return mediaFilesMapper.selectById(mediaId);
+    }
 }
