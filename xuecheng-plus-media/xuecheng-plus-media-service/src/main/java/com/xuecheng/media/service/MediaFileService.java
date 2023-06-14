@@ -37,7 +37,7 @@ PageResult<MediaFiles> queryMediaFiels(Long companyId,PageParams pageParams, Que
   * @param localFilePath 本地文件路径
   * @return
   */
- UploadFileResultDto uploadFile(Long companyId, UploadFileParamsDto uploadFileParamsDto, String localFilePath);
+ UploadFileResultDto uploadFile(Long companyId, UploadFileParamsDto uploadFileParamsDto, String localFilePath,String objectName);
 
  /**
   * 将文件信息插入到数据库表

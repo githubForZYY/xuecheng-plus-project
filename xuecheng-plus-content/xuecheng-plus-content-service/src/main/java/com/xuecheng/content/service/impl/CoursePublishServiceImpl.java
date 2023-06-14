@@ -1,5 +1,6 @@
 package com.xuecheng.content.service.impl;
 
+import com.xuecheng.base.exception.CommonError;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.base.utils.JsonUtil;
 import com.xuecheng.content.mapper.CourseBaseMapper;
@@ -13,6 +14,8 @@ import com.xuecheng.content.model.po.*;
 import com.xuecheng.content.service.CourseBaseInfoService;
 import com.xuecheng.content.service.CoursePublishService;
 import com.xuecheng.content.service.TeachplanService;
+import com.xuecheng.messagesdk.model.po.MqMessage;
+import com.xuecheng.messagesdk.service.MqMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -44,6 +47,8 @@ public class CoursePublishServiceImpl implements CoursePublishService {
     @Autowired
     CoursePublishMapper coursePublishMapper;
 
+    @Autowired
+    MqMessageService mqMessageService;
     /**
      * @description 获取课程预览信息
      * @param courseId 课程id
@@ -178,7 +183,9 @@ public class CoursePublishServiceImpl implements CoursePublishService {
      */
     //todo
     private void saveCoursePublishMessage(Long courseId){
-
-
+        MqMessage mqMessage=mqMessageService.addMessage("course_publish",String.valueOf(courseId),null,null);
+        if (mqMessage==null){
+            XueChengPlusException.cast(CommonError.UNKOWN_ERROR);
+        }
     }
 }
