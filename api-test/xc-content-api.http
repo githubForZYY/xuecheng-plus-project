@@ -118,3 +118,35 @@ Content-Type: application/json
   "teachmode" : "200002",
   "validDays" : 222
 }
+
+###申请令牌
+POST {{auth_host}}/auth/oauth/token?client_id=XcWebApp&client_secret=XcWebApp&grant_type=authorization_code&code=M2jphL&redirect_uri=http://www.51xuecheng.cn
+Content-Type: application/json
+
+
+### 密码模式
+POST {{auth_host}}/auth/oauth/token?client_id=XcWebApp&client_secret=XcWebApp&grant_type=password&username=zhangsan&password=123
+
+### 密码模式请求token
+POST {{auth_host}}/auth/oauth/token?client_id=XcWebApp&client_secret=XcWebApp&grant_type=password&username=zhangsan&password=123
+
+###校验jwt令牌
+POST {{auth_host}}/auth/oauth/check_token?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieHVlY2hlbmctcGx1cyJdLCJ1c2VyX25hbWUiOiJ6aGFuZ3NhbiIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE2ODY4OTQzMTEsImF1dGhvcml0aWVzIjpbInAxIl0sImp0aSI6IjA0OWVhZjk2LTZkODctNGE1ZC1hNDRmLTEzZDdkZTRiYTMwYyIsImNsaWVudF9pZCI6IlhjV2ViQXBwIn0.4-IQXTMnyvVjBHvWRoX1BpPlUFKSHwuZzHuZDJW8pHU
+
+### 查询课程信息
+GET http://localhost:63040/content/course/2
+
+### 携带token访问资源服务
+GET http://localhost:63040/content/course/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieHVlY2hlbmctcGx1cyJdLCJ1c2VyX25hbWUiOiJ6aGFuZ3NhbiIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE2ODY4OTQzMTEsImF1dGhvcml0aWVzIjpbInAxIl0sImp0aSI6IjA0OWVhZjk2LTZkODctNGE1ZC1hNDRmLTEzZDdkZTRiYTMwYyIsImNsaWVudF9pZCI6IlhjV2ViQXBwIn0.4-IQXTMnyvVjBHvWRoX1BpPlUFKSHwuZzHuZDJW8pHU
+
+### 通过网关访问资源服务
+GET http://localhost:63010/content/course/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieHVlY2hlbmctcGx1cyJdLCJ1c2VyX25hbWUiOiJ7XCJiaXJ0aGRheVwiOlwiMjAyMi0wOS0yOFQxOToyODo0NlwiLFwiY3JlYXRlVGltZVwiOlwiMjAyMi0wOS0yOFQwODozMjowM1wiLFwiaWRcIjpcIjUwXCIsXCJuYW1lXCI6XCLlrabnlJ8xXCIsXCJuaWNrbmFtZVwiOlwi5aSn5rC054mbXCIsXCJzZXhcIjpcIjFcIixcInN0YXR1c1wiOlwiMVwiLFwidXNlcm5hbWVcIjpcInN0dTFcIixcInVzZXJwaWNcIjpcImh0dHA6Ly9maWxlLjUxeHVlY2hlbmcuY24vZGRkZlwiLFwidXR5cGVcIjpcIjEwMTAwMVwifSIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE2ODcwMjA1OTMsImF1dGhvcml0aWVzIjpbInAxIl0sImp0aSI6Ijc4YzE5ZDI0LTRlZDgtNDdlMS1hOTJlLTE1NGY3ZDE0YjcwYyIsImNsaWVudF9pZCI6IlhjV2ViQXBwIn0.MISbs_S7FS711SruIACshHrKmNg9sY6JK3lFj3WFZ_M
+
+### 密码模式
+POST {{auth_host}}/auth/oauth/token?client_id=XcWebApp&client_secret=XcWebApp&grant_type=password&username=stu1&password=111111
+
+################扩展认证请求参数后######################
+###密码模式
+POST {{auth_host}}/auth/oauth/token?client_id=XcWebApp&client_secret=XcWebApp&grant_type=password&username={"username":"stu1","authType":"password","password":"111111"}
